@@ -188,7 +188,7 @@ export const searchNetworkEquipment = async (query) => {
         const { data, error } = await supabase
             .from('network_equipment')
             .select('*')
-            .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},location.ilike.${q},notes.ilike.${q},asset_id.ilike.${q}`)
+            .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},location.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},asset_id.ilike.${q}`)
             .order('id', { ascending: false });
 
         if (error) throw error;

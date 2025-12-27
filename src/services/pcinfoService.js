@@ -198,7 +198,7 @@ export const searchPCInfo = async (query) => {
             .from('pcinfo')
             .select('*')
             .or(
-                `computer_name.ilike.${q},cpu_name.ilike.${q},ip_address.ilike.${q},uuid.ilike.${q},os_name.ilike.${q},os_version.ilike.${q},notes.ilike.${q},custodian.ilike.${q},asset_id.ilike.${q}`
+                `computer_name.ilike.${q},cpu_name.ilike.${q},ip_address.ilike.${q},uuid.ilike.${q},os_name.ilike.${q},os_version.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},custodian.ilike.${q},asset_id.ilike.${q}`
             )
             .order('id', { ascending: false });
 

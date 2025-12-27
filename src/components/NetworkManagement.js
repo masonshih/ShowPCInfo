@@ -35,7 +35,7 @@ function NetworkManagement({ onCountChange }) {
         if (notesRef.current && notesRef.current.innerHTML !== formData.notes_ii) {
             notesRef.current.innerHTML = formData.notes_ii || '';
         }
-    }, [formData.notes_ii]);
+    }, [formData.notes_ii, showForm]);
 
     // 檢視 modal 狀態
     const [showViewModal, setShowViewModal] = useState(false);
@@ -54,7 +54,16 @@ function NetworkManagement({ onCountChange }) {
 
     useEffect(() => {
         fetchEquipment();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // 當 modal 關閉時重新整理資料
+    useEffect(() => {
+        if (!showViewModal && !showForm) {
+            fetchEquipment();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showViewModal, showForm]);
 
     // 搜尋時重置到第 1 頁
     useEffect(() => {
@@ -172,7 +181,10 @@ function NetworkManagement({ onCountChange }) {
             ...formData,
             purchase_date: formData.purchase_date || null
         };
-        const { data, error } = await createNetworkEquipment(submitData);
+        const { error } = await createNetworkEquipment({
+            ...submitData,
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+        });
         if (error) {
             setError('新增失敗: ' + error.message);
         } else {
@@ -198,7 +210,10 @@ function NetworkManagement({ onCountChange }) {
             ...formData,
             purchase_date: formData.purchase_date || null
         };
-        const { data, error } = await updateNetworkEquipment(editingId, submitData);
+        const { error } = await updateNetworkEquipment(editingId, {
+            ...submitData,
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+        });
         if (error) {
             setError('更新失敗: ' + error.message);
         } else {
@@ -393,7 +408,6 @@ function NetworkManagement({ onCountChange }) {
         setShowViewModal(false);
         setViewEquipment(null);
     };
-
     const getExportFilename = () => {
         return `network_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
     };

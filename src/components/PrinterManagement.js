@@ -41,7 +41,7 @@ function PrinterManagement({ onCountChange }) {
         if (notesRef.current && notesRef.current.innerHTML !== formData.notes_ii) {
             notesRef.current.innerHTML = formData.notes_ii || '';
         }
-    }, [formData.notes_ii]);
+    }, [formData.notes_ii, showForm]);
 
     // 排序狀態
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -53,7 +53,16 @@ function PrinterManagement({ onCountChange }) {
 
     useEffect(() => {
         fetchPrinters();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // 當 modal 關閉時重新整理資料
+    useEffect(() => {
+        if (!showViewModal && !showForm) {
+            fetchPrinters();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showViewModal, showForm]);
 
     // 搜尋時重置到第 1 頁
     useEffect(() => {
@@ -170,7 +179,10 @@ function PrinterManagement({ onCountChange }) {
             ...formData,
             toner_replaced_at: formData.toner_replaced_at || null
         };
-        const { data, error } = await createPrinter(submitData);
+        const { error } = await createPrinter({
+            ...submitData,
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+        });
         if (error) {
             setError('新增失敗: ' + error.message);
         } else {
@@ -197,7 +209,10 @@ function PrinterManagement({ onCountChange }) {
             ...formData,
             toner_replaced_at: formData.toner_replaced_at || null
         };
-        const { data, error } = await updatePrinter(editingId, submitData);
+        const { error } = await updatePrinter(editingId, {
+            ...submitData,
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+        });
         if (error) {
             setError('更新失敗: ' + error.message);
         } else {

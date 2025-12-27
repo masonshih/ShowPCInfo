@@ -71,7 +71,7 @@ function App() {
     if (notesRef.current && notesRef.current.innerHTML !== formData.notes_ii) {
       notesRef.current.innerHTML = formData.notes_ii || '';
     }
-  }, [formData.notes_ii]);
+  }, [formData.notes_ii, showForm]);
 
   // 分頁狀態
   // 分頁狀態
@@ -181,6 +181,7 @@ function App() {
     if (user) {
       fetchPCInfo();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchPCInfo = async () => {
@@ -308,35 +309,16 @@ function App() {
   const handleCreate = async (e) => {
     e.preventDefault();
 
-    const dataToSubmit = {};
-    const numericFields = ['ram_gb', 'vga_ram_mb'];
-    Object.keys(formData).forEach(key => {
-      if (key === 'cores') {
-        if (coresList && coresList.length > 0) {
-          dataToSubmit.cores = coresList.join(',');
-        } else if (formData[key] !== '') {
-          dataToSubmit.cores = Number(formData[key]);
-        }
-        return;
-      }
-
-      if (key === 'logical_processors') {
-        if (logicalList && logicalList.length > 0) {
-          dataToSubmit.logical_processors = logicalList.join(',');
-        } else if (formData[key] !== '') {
-          dataToSubmit.logical_processors = Number(formData[key]);
-        }
-        return;
-      }
-
-      if (formData[key] !== '') {
-        if (numericFields.includes(key)) {
-          dataToSubmit[key] = key === 'ram_gb' ? parseFloat(formData[key]) : Number(formData[key]);
-        } else {
-          dataToSubmit[key] = formData[key];
-        }
-      }
-    });
+    const dataToSubmit = {
+      ...formData,
+      cores: coresList.length > 0 ? coresList.join(',') : (formData.cores || null),
+      logical_processors: logicalList.length > 0 ? logicalList.join(',') : (formData.logical_processors || null),
+      ram_gb: formData.ram_gb !== '' ? parseFloat(formData.ram_gb) : null,
+      vga_ram_mb: formData.vga_ram_mb !== '' ? Number(formData.vga_ram_mb) : null,
+      os_install_date: formData.os_install_date || null,
+      bios_release_date: formData.bios_release_date || null,
+      bios_manufacture_date: formData.bios_manufacture_date || null
+    };
 
     const validationError = validateForm(dataToSubmit);
     if (validationError) {
@@ -344,7 +326,10 @@ function App() {
       return;
     }
 
-    const { data, error } = await createPCInfo(dataToSubmit);
+    const { error } = await createPCInfo({
+      ...dataToSubmit,
+      notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+    });
     if (error) {
       setError('新增失敗: ' + error.message);
     } else {
@@ -357,36 +342,16 @@ function App() {
   const handleUpdate = async (e) => {
     e.preventDefault();
 
-    // 準備資料，移除空字串，並轉換數字欄位
-    const dataToSubmit = {};
-    const numericFields = ['ram_gb', 'vga_ram_mb'];
-    Object.keys(formData).forEach(key => {
-      if (key === 'cores') {
-        if (coresList && coresList.length > 0) {
-          dataToSubmit.cores = coresList.join(',');
-        } else if (formData[key] !== '') {
-          dataToSubmit.cores = Number(formData[key]);
-        }
-        return;
-      }
-
-      if (key === 'logical_processors') {
-        if (logicalList && logicalList.length > 0) {
-          dataToSubmit.logical_processors = logicalList.join(',');
-        } else if (formData[key] !== '') {
-          dataToSubmit.logical_processors = Number(formData[key]);
-        }
-        return;
-      }
-
-      if (formData[key] !== '') {
-        if (numericFields.includes(key)) {
-          dataToSubmit[key] = key === 'ram_gb' ? parseFloat(formData[key]) : Number(formData[key]);
-        } else {
-          dataToSubmit[key] = formData[key];
-        }
-      }
-    });
+    const dataToSubmit = {
+      ...formData,
+      cores: coresList.length > 0 ? coresList.join(',') : (formData.cores || null),
+      logical_processors: logicalList.length > 0 ? logicalList.join(',') : (formData.logical_processors || null),
+      ram_gb: formData.ram_gb !== '' ? parseFloat(formData.ram_gb) : null,
+      vga_ram_mb: formData.vga_ram_mb !== '' ? Number(formData.vga_ram_mb) : null,
+      os_install_date: formData.os_install_date || null,
+      bios_release_date: formData.bios_release_date || null,
+      bios_manufacture_date: formData.bios_manufacture_date || null
+    };
 
     const validationError = validateForm(dataToSubmit, true, editingId);
     if (validationError) {
@@ -394,7 +359,10 @@ function App() {
       return;
     }
 
-    const { data, error } = await updatePCInfo(editingId, dataToSubmit);
+    const { error } = await updatePCInfo(editingId, {
+      ...dataToSubmit,
+      notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+    });
     if (error) {
       setError('更新失敗: ' + error.message);
     } else {

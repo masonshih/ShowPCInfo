@@ -188,7 +188,7 @@ export const searchPrinters = async (query) => {
         const { data, error } = await supabase
             .from('printers')
             .select('*')
-            .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},notes.ilike.${q},asset_id.ilike.${q}`)
+            .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},asset_id.ilike.${q}`)
             .order('id', { ascending: false });
 
         if (error) throw error;
