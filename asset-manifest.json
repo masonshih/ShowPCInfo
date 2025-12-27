@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/ShowPCInfo/static/css/main.a2c683e5.css",
+    "main.css": "/ShowPCInfo/static/css/main.f6160246.css",
     "main.js": "/ShowPCInfo/static/js/main.76e8430f.js",
     "static/js/239.7c20b3f5.chunk.js": "/ShowPCInfo/static/js/239.7c20b3f5.chunk.js",
     "static/js/977.0738d361.chunk.js": "/ShowPCInfo/static/js/977.0738d361.chunk.js",
     "static/js/455.9eb850a5.chunk.js": "/ShowPCInfo/static/js/455.9eb850a5.chunk.js",
     "static/js/453.dc150f32.chunk.js": "/ShowPCInfo/static/js/453.dc150f32.chunk.js",
     "index.html": "/ShowPCInfo/index.html",
-    "main.a2c683e5.css.map": "/ShowPCInfo/static/css/main.a2c683e5.css.map",
+    "main.f6160246.css.map": "/ShowPCInfo/static/css/main.f6160246.css.map",
     "main.76e8430f.js.map": "/ShowPCInfo/static/js/main.76e8430f.js.map",
     "239.7c20b3f5.chunk.js.map": "/ShowPCInfo/static/js/239.7c20b3f5.chunk.js.map",
     "977.0738d361.chunk.js.map": "/ShowPCInfo/static/js/977.0738d361.chunk.js.map",
@@ -15,7 +15,7 @@
     "453.dc150f32.chunk.js.map": "/ShowPCInfo/static/js/453.dc150f32.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.a2c683e5.css",
+    "static/css/main.f6160246.css",
     "static/js/main.76e8430f.js"
   ]
 }
