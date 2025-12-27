@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+# 忽略環境變數檔案
+.env
+.env.local
+.env.development.local
+
+# 忽略依賴套件
+node_modules/

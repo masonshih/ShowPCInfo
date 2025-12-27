@@ -890,19 +890,19 @@ function App() {
                 <div style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px', display: 'flex', gap: '5px' }}>
                   <button className="btn btn-secondary" onClick={() => {
                     const filename = `pc_info_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                    try { exportPCToCSV(pcInfoList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                    try { exportPCToCSV(sortedPCList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                   }}>
                     📄 CSV
                   </button>
                   <button className="btn btn-secondary" onClick={() => {
                     const filename = `pc_info_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                    try { exportPCToExcel(pcInfoList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                    try { exportPCToExcel(sortedPCList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                   }}>
                     📊 Excel
                   </button>
                   <button className="btn btn-secondary" onClick={async () => {
                     const filename = `pc_info_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                    try { await exportPCToPDF(pcInfoList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                    try { await exportPCToPDF(sortedPCList, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                   }}>
                     📑 PDF
                   </button>

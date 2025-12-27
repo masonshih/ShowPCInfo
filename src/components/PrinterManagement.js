@@ -551,19 +551,19 @@ function PrinterManagement({ onCountChange }) {
                     <div style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px', display: 'flex', gap: '5px' }}>
                         <button className="btn btn-secondary" onClick={() => {
                             const filename = `printers_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                            try { exportToCSV(printers, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportToCSV(sortedPrinters, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 CSV">
                             📄 CSV
                         </button>
                         <button className="btn btn-secondary" onClick={() => {
                             const filename = `printers_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                            try { exportToExcel(printers, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportToExcel(sortedPrinters, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 Excel">
                             📊 Excel
                         </button>
                         <button className="btn btn-secondary" onClick={() => {
                             const filename = `printers_export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${new Date().toTimeString().slice(0, 5).replace(/:/g, '')}`;
-                            try { exportToPDF(printers, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportToPDF(sortedPrinters, filename); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 PDF">
                             📑 PDF
                         </button>

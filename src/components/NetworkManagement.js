@@ -543,17 +543,17 @@ function NetworkManagement({ onCountChange }) {
                     )}
                     <div style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px', display: 'flex', gap: '5px' }}>
                         <button className="btn btn-secondary" onClick={() => {
-                            try { exportNetworkToCSV(equipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportNetworkToCSV(sortedEquipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 CSV">
                             📄 CSV
                         </button>
                         <button className="btn btn-secondary" onClick={() => {
-                            try { exportNetworkToExcel(equipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportNetworkToExcel(sortedEquipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 Excel">
                             📊 Excel
                         </button>
                         <button className="btn btn-secondary" onClick={() => {
-                            try { exportNetworkToPDF(equipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
+                            try { exportNetworkToPDF(sortedEquipmentList, getExportFilename()); } catch (e) { alert('匯出失敗: ' + e.message); }
                         }} title="匯出 PDF">
                             📑 PDF
                         </button>
