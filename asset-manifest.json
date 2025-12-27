@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/ShowPCInfo/static/css/main.f6160246.css",
-    "main.js": "/ShowPCInfo/static/js/main.e672d261.js",
+    "main.js": "/ShowPCInfo/static/js/main.c7aa1920.js",
     "static/js/239.7c20b3f5.chunk.js": "/ShowPCInfo/static/js/239.7c20b3f5.chunk.js",
     "static/js/977.0738d361.chunk.js": "/ShowPCInfo/static/js/977.0738d361.chunk.js",
     "static/js/455.9eb850a5.chunk.js": "/ShowPCInfo/static/js/455.9eb850a5.chunk.js",
     "static/js/453.dc150f32.chunk.js": "/ShowPCInfo/static/js/453.dc150f32.chunk.js",
     "index.html": "/ShowPCInfo/index.html",
     "main.f6160246.css.map": "/ShowPCInfo/static/css/main.f6160246.css.map",
-    "main.e672d261.js.map": "/ShowPCInfo/static/js/main.e672d261.js.map",
+    "main.c7aa1920.js.map": "/ShowPCInfo/static/js/main.c7aa1920.js.map",
     "239.7c20b3f5.chunk.js.map": "/ShowPCInfo/static/js/239.7c20b3f5.chunk.js.map",
     "977.0738d361.chunk.js.map": "/ShowPCInfo/static/js/977.0738d361.chunk.js.map",
     "455.9eb850a5.chunk.js.map": "/ShowPCInfo/static/js/455.9eb850a5.chunk.js.map",
@@ -16,6 +16,6 @@
   },
   "entrypoints": [
     "static/css/main.f6160246.css",
-    "static/js/main.e672d261.js"
+    "static/js/main.c7aa1920.js"
   ]
 }
