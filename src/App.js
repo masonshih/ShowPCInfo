@@ -816,19 +816,19 @@ function App() {
             className={`tab-btn tab-pc ${currentTab === 'pc' ? 'active' : ''}`}
             onClick={() => setCurrentTab('pc')}
           >
-            💻 電腦資訊
+            💻 電腦資訊 ({sortedPCList.length})
           </button>
           <button
             className={`tab-btn tab-printer ${currentTab === 'printer' ? 'active' : ''}`}
             onClick={() => setCurrentTab('printer')}
           >
-            🖨️ 印表機資訊
+            🖨️ 印表機資訊 ({printerCount})
           </button>
           <button
             className={`tab-btn tab-network ${currentTab === 'network' ? 'active' : ''}`}
             onClick={() => setCurrentTab('network')}
           >
-            🌐 網路設備
+            🌐 網路設備 ({networkCount})
           </button>
         </div>
 
