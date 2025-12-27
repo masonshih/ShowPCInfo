@@ -7,7 +7,7 @@ export const getAllPrinters = async () => {
     try {
         const { data, error } = await supabase
             .from('printers')
-            .select('*')
+            .select('id, brand, model, asset_id, ip_address, toner_replaced_at, notes, is_hidden, hidden_at, updated_at, created_at')
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -187,7 +187,7 @@ export const searchPrinters = async (query) => {
         const q = `%${query}%`;
         const { data, error } = await supabase
             .from('printers')
-            .select('*')
+            .select('id, brand, model, asset_id, ip_address, toner_replaced_at, notes, is_hidden, hidden_at, updated_at, created_at')
             .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},asset_id.ilike.${q}`)
             .order('id', { ascending: false });
 
@@ -195,6 +195,24 @@ export const searchPrinters = async (query) => {
         return { data, error: null };
     } catch (error) {
         console.error('Error searching printers:', error);
+        return { data: null, error };
+    }
+};
+/**
+ * 獲取單一印表機資訊 (包含備註 II)
+ */
+export const getPrinterById = async (id) => {
+    try {
+        const { data, error } = await supabase
+            .from('printers')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error fetching printer detail:', error);
         return { data: null, error };
     }
 };

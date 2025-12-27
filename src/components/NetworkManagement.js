@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllNetworkEquipment, createNetworkEquipment, updateNetworkEquipment, deleteNetworkEquipment, deleteNetworkEquipments, searchNetworkEquipment, restoreNetworkEquipment, restoreNetworkEquipments, permanentDeleteNetworkEquipment, permanentDeleteNetworkEquipments } from '../services/networkService';
+import { getAllNetworkEquipment, createNetworkEquipment, updateNetworkEquipment, deleteNetworkEquipment, deleteNetworkEquipments, searchNetworkEquipment, restoreNetworkEquipment, restoreNetworkEquipments, permanentDeleteNetworkEquipment, permanentDeleteNetworkEquipments, getNetworkEquipmentById } from '../services/networkService';
 import { exportNetworkToCSV, exportNetworkToExcel, exportNetworkToPDF } from '../utils/exportUtils';
 import { isValidIP } from '../utils/validators';
 
@@ -20,6 +20,7 @@ function NetworkManagement({ onCountChange }) {
         notes_ii: ''
     });
     const [ipError, setIpError] = useState('');
+    const [loadingDetail, setLoadingDetail] = useState(false);
 
     // 搜尋與批次刪除狀態
     const [searchQuery, setSearchQuery] = useState('');
@@ -212,7 +213,8 @@ function NetworkManagement({ onCountChange }) {
         };
         const { error } = await updateNetworkEquipment(editingId, {
             ...submitData,
-            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii,
+            updated_at: new Date().toISOString()
         });
         if (error) {
             setError('更新失敗: ' + error.message);
@@ -222,34 +224,54 @@ function NetworkManagement({ onCountChange }) {
         }
     };
 
-    const handleEdit = (item) => {
-        setEditingId(item.id);
+    const handleEdit = async (item) => {
+        setLoadingDetail(true);
+        const { data, error } = await getNetworkEquipmentById(item.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        const fullItem = data;
+        setEditingId(fullItem.id);
         setFormData({
-            brand: item.brand || '',
-            model: item.model || '',
-            asset_id: item.asset_id || '',
-            ip_address: item.ip_address || '',
-            location: item.location || '',
-            purchase_date: item.purchase_date || '',
-            notes: item.notes || '',
-            notes_ii: item.notes_ii || ''
+            brand: fullItem.brand || '',
+            model: fullItem.model || '',
+            asset_id: fullItem.asset_id || '',
+            ip_address: fullItem.ip_address || '',
+            location: fullItem.location || '',
+            purchase_date: fullItem.purchase_date || '',
+            notes: fullItem.notes || '',
+            notes_ii: fullItem.notes_ii || ''
         });
         setShowForm(true);
         setIpError('');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleClone = (item) => {
+    const handleClone = async (item) => {
+        setLoadingDetail(true);
+        const { data, error } = await getNetworkEquipmentById(item.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        const fullItem = data;
         setEditingId(null); // Ensure it's treated as new
         setFormData({
-            brand: item.brand || '',
-            model: item.model || '',
-            asset_id: item.asset_id || '',
-            ip_address: item.ip_address || '', // IP might need manual change, but keeping it for now
-            location: item.location || '',
-            purchase_date: item.purchase_date || '',
-            notes: item.notes || '',
-            notes_ii: item.notes_ii || ''
+            brand: fullItem.brand || '',
+            model: fullItem.model || '',
+            asset_id: fullItem.asset_id || '',
+            ip_address: fullItem.ip_address || '', // IP might need manual change, but keeping it for now
+            location: fullItem.location || '',
+            purchase_date: fullItem.purchase_date || '',
+            notes: fullItem.notes || '',
+            notes_ii: fullItem.notes_ii || ''
         });
         setShowForm(true);
         setIpError('');
@@ -399,8 +421,17 @@ function NetworkManagement({ onCountChange }) {
         }));
     };
 
-    const handleView = (item) => {
-        setViewEquipment(item);
+    const handleView = async (item) => {
+        setLoadingDetail(true);
+        const { data, error } = await getNetworkEquipmentById(item.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        setViewEquipment(data);
         setShowViewModal(true);
     };
 
@@ -614,6 +645,18 @@ function NetworkManagement({ onCountChange }) {
                 </div>
             )}
 
+            {loadingDetail && (
+                <div className="modal-overlay" style={{ zIndex: 3000 }}>
+                    <div className="modal" style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '8px', maxWidth: '300px' }}>
+                        <div className="spinner" style={{ border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 2s linear infinite', margin: '0 auto 10px' }}></div>
+                        <p>正在載入詳細資料...</p>
+                        <style>{`
+                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                        `}</style>
+                    </div>
+                </div>
+            )}
+
             {showForm && (
                 <div className="form-container">
                     <h2>{editingId ? '✏️ 編輯網路設備' : '➕ 新增網路設備'}</h2>
@@ -797,6 +840,7 @@ function NetworkManagement({ onCountChange }) {
                                     />
                                 </div>
                             )}
+                            <div className="modal-row"><strong>異動日期:</strong> <span>{viewEquipment.updated_at ? new Date(viewEquipment.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'}</span></div>
                         </div>
                     </div>
                 </div>

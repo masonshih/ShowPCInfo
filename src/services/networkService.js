@@ -7,7 +7,7 @@ export const getAllNetworkEquipment = async () => {
     try {
         const { data, error } = await supabase
             .from('network_equipment')
-            .select('*')
+            .select('id, brand, model, asset_id, ip_address, location, purchase_date, notes, is_hidden, hidden_at, updated_at, created_at')
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -187,7 +187,7 @@ export const searchNetworkEquipment = async (query) => {
         const q = `%${query}%`;
         const { data, error } = await supabase
             .from('network_equipment')
-            .select('*')
+            .select('id, brand, model, asset_id, ip_address, location, purchase_date, notes, is_hidden, hidden_at, updated_at, created_at')
             .or(`brand.ilike.${q},model.ilike.${q},ip_address.ilike.${q},location.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},asset_id.ilike.${q}`)
             .order('id', { ascending: false });
 
@@ -195,6 +195,24 @@ export const searchNetworkEquipment = async (query) => {
         return { data, error: null };
     } catch (error) {
         console.error('Error searching network equipment:', error);
+        return { data: null, error };
+    }
+};
+/**
+ * 獲取單一網路設備資訊 (包含備註 II)
+ */
+export const getNetworkEquipmentById = async (id) => {
+    try {
+        const { data, error } = await supabase
+            .from('network_equipment')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error fetching network equipment detail:', error);
         return { data: null, error };
     }
 };

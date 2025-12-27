@@ -2,54 +2,35 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-// 定義印表機匯出欄位對應
-const PRINTER_COLUMNS = [
-    { header: '廠牌', key: 'brand' },
-    { header: '型號', key: 'model' },
-    { header: '財編', key: 'asset_id' },
-    { header: 'IP 地址', key: 'ip_address' },
-    { header: '碳粉更換日期', key: 'toner_replaced_at' },
-    { header: '備註', key: 'notes' },
-    { header: '備註 II', key: 'notes_ii' }
-];
 
-// 定義網路設備匯出欄位對應
-const NETWORK_COLUMNS = [
-    { header: '廠牌', key: 'brand' },
-    { header: '型號', key: 'model' },
-    { header: '財編', key: 'asset_id' },
-    { header: 'IP 地址', key: 'ip_address' },
-    { header: '位置', key: 'location' },
-    { header: '購買日期', key: 'purchase_date' },
-    { header: '備註', key: 'notes' },
-    { header: '備註 II', key: 'notes_ii' }
-];
 
 // 定義電腦資訊匯出欄位對應
 
 
 const formatPrinterData = (data) => {
     return data.map(item => ({
-        brand: item.brand,
-        model: item.model,
-        asset_id: item.asset_id || '-',
-        ip_address: item.ip_address || '-',
-        toner_replaced_at: item.toner_replaced_at ? new Date(item.toner_replaced_at).toLocaleDateString('zh-TW') : '-',
-        notes: item.notes || '-',
-        notes_ii: item.notes_ii ? item.notes_ii.replace(/<[^>]+>/g, '') : '-' // Strip HTML for CSV/Excel
+        '廠牌': item.brand,
+        '型號': item.model,
+        '財編': item.asset_id || '-',
+        'IP 地址': item.ip_address || '-',
+        '碳粉更換日期': item.toner_replaced_at ? new Date(item.toner_replaced_at).toLocaleDateString('zh-TW') : '-',
+        '備註': item.notes || '-',
+        '備註 II': item.notes_ii ? item.notes_ii.replace(/<[^>]+>/g, '') : '-',
+        '異動日期': item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     }));
 };
 
 const formatNetworkData = (data) => {
     return data.map(item => ({
-        brand: item.brand,
-        model: item.model,
-        asset_id: item.asset_id || '-',
-        ip_address: item.ip_address || '-',
-        location: item.location || '-',
-        purchase_date: item.purchase_date ? new Date(item.purchase_date).toLocaleDateString('zh-TW') : '-',
-        notes: item.notes || '-',
-        notes_ii: item.notes_ii ? item.notes_ii.replace(/<[^>]+>/g, '') : '-' // Strip HTML for CSV/Excel
+        '廠牌': item.brand,
+        '型號': item.model,
+        '財編': item.asset_id || '-',
+        'IP 地址': item.ip_address || '-',
+        '位置': item.location || '-',
+        '購買日期': item.purchase_date ? new Date(item.purchase_date).toLocaleDateString('zh-TW') : '-',
+        '備註': item.notes || '-',
+        '備註 II': item.notes_ii ? item.notes_ii.replace(/<[^>]+>/g, '') : '-',
+        '異動日期': item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     }));
 };
 
@@ -60,7 +41,8 @@ const formatPCData = (data) => {
         '記憶體': item.ram_gb ? `${item.ram_gb} GB` : '-',
         '硬碟資訊': item.hdd_info || '-',
         '作業系統': item.os_name ? `${item.os_name}${item.os_version ? ` ${item.os_version}` : ''}` : '-',
-        'IP 地址': item.ip_address || '-'
+        'IP 地址': item.ip_address || '-',
+        '異動日期': item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     }));
 };
 
@@ -152,20 +134,22 @@ const generatePDF = async (headers, rows, title, filename) => {
                 const blob = await response.blob();
                 if (blob.size > 1000) {
                     const reader = new FileReader();
-                    await new Promise((resolve, reject) => {
+                    const fontNameResult = await new Promise((resolve, reject) => {
                         reader.onloadend = () => {
                             try {
                                 const base64data = reader.result.split(',')[1];
                                 doc.addFileToVFS(font.name + '.ttf', base64data);
                                 doc.addFont(font.name + '.ttf', font.name, 'normal');
                                 doc.setFont(font.name);
-                                loadedFontName = font.name;
-                                resolve();
+                                resolve(font.name);
                             } catch (e) { reject(e); }
                         };
                         reader.onerror = reject;
                         reader.readAsDataURL(blob);
                     });
+                    if (fontNameResult) {
+                        loadedFontName = fontNameResult;
+                    }
                     if (loadedFontName) break;
                 }
             }
@@ -198,7 +182,7 @@ const generatePDF = async (headers, rows, title, filename) => {
  * 匯出印表機為 PDF
  */
 export const exportToPDF = async (data, filename = 'printers_export') => {
-    const headers = ["Brand", "Model", "Asset ID", "IP Address", "Toner Date", "Notes", "Notes II"];
+    const headers = ["Brand", "Model", "Asset ID", "IP Address", "Toner Date", "Notes", "Notes II", "異動日期"];
     const rows = data.map(item => [
         item.brand,
         item.model,
@@ -206,7 +190,8 @@ export const exportToPDF = async (data, filename = 'printers_export') => {
         item.ip_address || '-',
         item.toner_replaced_at ? new Date(item.toner_replaced_at).toLocaleDateString('zh-TW') : '-',
         item.notes || '-',
-        item.notes_ii ? '[Rich Content]' : '-'
+        item.notes_ii ? '[Rich Content]' : '-',
+        item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     ]);
 
     await generatePDF(headers, rows, 'Printer Information Export', filename);
@@ -216,7 +201,7 @@ export const exportToPDF = async (data, filename = 'printers_export') => {
  * 匯出網路設備為 PDF
  */
 export const exportNetworkToPDF = async (data, filename = 'network_export') => {
-    const headers = ["Brand", "Model", "Asset ID", "IP Address", "Location", "Purchase Date", "Notes", "Notes II"];
+    const headers = ["Brand", "Model", "Asset ID", "IP Address", "Location", "Purchase Date", "Notes", "Notes II", "異動日期"];
     const rows = data.map(item => [
         item.brand,
         item.model,
@@ -225,7 +210,8 @@ export const exportNetworkToPDF = async (data, filename = 'network_export') => {
         item.location || '-',
         item.purchase_date ? new Date(item.purchase_date).toLocaleDateString('zh-TW') : '-',
         item.notes || '-',
-        item.notes_ii ? '[Rich Content]' : '-'
+        item.notes_ii ? '[Rich Content]' : '-',
+        item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     ]);
 
     await generatePDF(headers, rows, 'Network Equipment Export', filename);
@@ -236,7 +222,7 @@ export const exportNetworkToPDF = async (data, filename = 'network_export') => {
  */
 export const exportPCToPDF = async (data, filename = 'pc_info_export') => {
     const headers = [
-        "電腦名稱", "CPU", "記憶體", "硬碟資訊", "作業系統", "IP 地址"
+        "電腦名稱", "CPU", "記憶體", "硬碟資訊", "作業系統", "IP 地址", "異動日期"
     ];
     const rows = data.map(item => [
         item.computer_name || '-',
@@ -244,7 +230,8 @@ export const exportPCToPDF = async (data, filename = 'pc_info_export') => {
         item.ram_gb ? `${item.ram_gb} GB` : '-',
         item.hdd_info || '-',
         item.os_name ? `${item.os_name}\n${item.os_version || ''}` : '-',
-        item.ip_address || '-'
+        item.ip_address || '-',
+        item.updated_at ? new Date(item.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'
     ]);
 
     await generatePDF(headers, rows, 'PC Information Export', filename);

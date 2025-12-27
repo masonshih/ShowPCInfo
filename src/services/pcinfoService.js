@@ -7,7 +7,7 @@ export const getAllPCInfo = async () => {
     try {
         const { data, error } = await supabase
             .from('pcinfo')
-            .select('*')
+            .select('id, computer_name, cpu_name, description, notes, custodian, asset_id, cores, logical_processors, os_name, os_version, os_architecture, os_install_date, hostname, ip_address, ram_gb, hdd_info, vga_name, vga_ram_mb, uuid, bios_vendor, bios_version, bios_release_date, bios_manufacture_date, is_hidden, hidden_at, updated_at, created_at')
             // 依 id 由大到小排序，讓最新的記錄顯示在最前面
             .order('id', { ascending: false });
 
@@ -196,7 +196,7 @@ export const searchPCInfo = async (query) => {
         // 先搜尋 pcinfo 表的欄位（包含 notes 和 custodian）
         const { data: pcData, error: pcError } = await supabase
             .from('pcinfo')
-            .select('*')
+            .select('id, computer_name, cpu_name, description, notes, custodian, asset_id, cores, logical_processors, os_name, os_version, os_architecture, os_install_date, hostname, ip_address, ram_gb, hdd_info, vga_name, vga_ram_mb, uuid, bios_vendor, bios_version, bios_release_date, bios_manufacture_date, is_hidden, hidden_at, updated_at, created_at')
             .or(
                 `computer_name.ilike.${q},cpu_name.ilike.${q},ip_address.ilike.${q},uuid.ilike.${q},os_name.ilike.${q},os_version.ilike.${q},notes.ilike.${q},notes_ii.ilike.${q},custodian.ilike.${q},asset_id.ilike.${q}`
             )
@@ -222,7 +222,7 @@ export const searchPCInfo = async (query) => {
         if (softwarePcIds.length > 0) {
             const { data: pcsFromSoftware, error: pcsError } = await supabase
                 .from('pcinfo')
-                .select('*')
+                .select('id, computer_name, cpu_name, description, notes, custodian, asset_id, cores, logical_processors, os_name, os_version, os_architecture, os_install_date, hostname, ip_address, ram_gb, hdd_info, vga_name, vga_ram_mb, uuid, bios_vendor, bios_version, bios_release_date, bios_manufacture_date, is_hidden, hidden_at, updated_at, created_at')
                 .in('id', softwarePcIds)
                 .order('id', { ascending: false });
 
@@ -260,3 +260,21 @@ export const searchPCInfo = async (query) => {
     }
 };
 
+/**
+ * 獲取單一 PC 資訊 (包含備註 II)
+ */
+export const getPCInfoById = async (id) => {
+    try {
+        const { data, error } = await supabase
+            .from('pcinfo')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error fetching PC info detail:', error);
+        return { data: null, error };
+    }
+};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllPrinters, createPrinter, updatePrinter, deletePrinter, deletePrinters, searchPrinters, restorePrinter, restorePrinters, permanentDeletePrinter, permanentDeletePrinters } from '../services/printerService';
+import { getAllPrinters, createPrinter, updatePrinter, deletePrinter, deletePrinters, searchPrinters, restorePrinter, restorePrinters, permanentDeletePrinter, permanentDeletePrinters, getPrinterById } from '../services/printerService';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportUtils';
 import { isValidIP } from '../utils/validators';
 
@@ -19,6 +19,7 @@ function PrinterManagement({ onCountChange }) {
         notes_ii: ''
     });
     const [ipError, setIpError] = useState('');
+    const [loadingDetail, setLoadingDetail] = useState(false);
 
     // 搜尋與批次刪除狀態
     const [searchQuery, setSearchQuery] = useState('');
@@ -211,7 +212,8 @@ function PrinterManagement({ onCountChange }) {
         };
         const { error } = await updatePrinter(editingId, {
             ...submitData,
-            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+            notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii,
+            updated_at: new Date().toISOString()
         });
         if (error) {
             setError('更新失敗: ' + error.message);
@@ -221,32 +223,52 @@ function PrinterManagement({ onCountChange }) {
         }
     };
 
-    const handleEdit = (printer) => {
-        setEditingId(printer.id);
+    const handleEdit = async (printer) => {
+        setLoadingDetail(true);
+        const { data, error } = await getPrinterById(printer.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        const fullPrinter = data;
+        setEditingId(fullPrinter.id);
         setFormData({
-            brand: printer.brand || '',
-            model: printer.model || '',
-            asset_id: printer.asset_id || '',
-            ip_address: printer.ip_address || '',
-            toner_replaced_at: printer.toner_replaced_at || '',
-            notes: printer.notes || '',
-            notes_ii: printer.notes_ii || ''
+            brand: fullPrinter.brand || '',
+            model: fullPrinter.model || '',
+            asset_id: fullPrinter.asset_id || '',
+            ip_address: fullPrinter.ip_address || '',
+            toner_replaced_at: fullPrinter.toner_replaced_at || '',
+            notes: fullPrinter.notes || '',
+            notes_ii: fullPrinter.notes_ii || ''
         });
         setShowForm(true);
         setIpError('');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleClone = (printer) => {
+    const handleClone = async (printer) => {
+        setLoadingDetail(true);
+        const { data, error } = await getPrinterById(printer.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        const fullPrinter = data;
         setEditingId(null);
         setFormData({
-            brand: printer.brand || '',
-            model: printer.model || '',
-            asset_id: printer.asset_id || '',
-            ip_address: printer.ip_address || '',
-            toner_replaced_at: printer.toner_replaced_at || '',
-            notes: printer.notes || '',
-            notes_ii: printer.notes_ii || ''
+            brand: fullPrinter.brand || '',
+            model: fullPrinter.model || '',
+            asset_id: fullPrinter.asset_id || '',
+            ip_address: fullPrinter.ip_address || '',
+            toner_replaced_at: fullPrinter.toner_replaced_at || '',
+            notes: fullPrinter.notes || '',
+            notes_ii: fullPrinter.notes_ii || ''
         });
         setShowForm(true);
         setIpError('');
@@ -410,8 +432,17 @@ function PrinterManagement({ onCountChange }) {
         }));
     };
 
-    const handleView = (printer) => {
-        setViewPrinter(printer);
+    const handleView = async (printer) => {
+        setLoadingDetail(true);
+        const { data, error } = await getPrinterById(printer.id);
+        setLoadingDetail(false);
+
+        if (error) {
+            setError('無法讀取詳細資料: ' + error.message);
+            return;
+        }
+
+        setViewPrinter(data);
         setShowViewModal(true);
     };
 
@@ -625,6 +656,18 @@ function PrinterManagement({ onCountChange }) {
                 </div>
             )}
 
+            {loadingDetail && (
+                <div className="modal-overlay" style={{ zIndex: 3000 }}>
+                    <div className="modal" style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '8px', maxWidth: '300px' }}>
+                        <div className="spinner" style={{ border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 2s linear infinite', margin: '0 auto 10px' }}></div>
+                        <p>正在載入詳細資料...</p>
+                        <style>{`
+                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                        `}</style>
+                    </div>
+                </div>
+            )}
+
             {showForm && (
                 <div className="form-container">
                     <h2>{editingId ? '✏️ 編輯印表機' : '➕ 新增印表機'}</h2>
@@ -806,6 +849,7 @@ function PrinterManagement({ onCountChange }) {
                                     />
                                 </div>
                             )}
+                            <div className="modal-row"><strong>異動日期:</strong> <span>{viewPrinter.updated_at ? new Date(viewPrinter.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'}</span></div>
                         </div>
                     </div>
                 </div>

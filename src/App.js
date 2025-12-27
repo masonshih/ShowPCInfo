@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { getAllPCInfo, createPCInfo, updatePCInfo, deletePCInfo, deletePCInfos, searchPCInfo, restorePCInfo, restorePCInfos, permanentDeletePCInfo, permanentDeletePCInfos } from './services/pcinfoService';
+import { getAllPCInfo, createPCInfo, updatePCInfo, deletePCInfo, deletePCInfos, searchPCInfo, restorePCInfo, restorePCInfos, permanentDeletePCInfo, permanentDeletePCInfos, getPCInfoById } from './services/pcinfoService';
 import { getInstalledSoftwareByPCId } from './services/installedSoftwareService';
 
 import { onAuthStateChange, signOut } from './services/authService';
@@ -79,6 +79,12 @@ function App() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [copySuccess, setCopySuccess] = useState(null); // { id: number, text: string }
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [viewPc, setViewPc] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // 排序邏輯
   const requestSort = (key) => {
@@ -361,7 +367,8 @@ function App() {
 
     const { error } = await updatePCInfo(editingId, {
       ...dataToSubmit,
-      notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii
+      notes_ii: notesRef.current ? notesRef.current.innerHTML : formData.notes_ii,
+      updated_at: new Date().toISOString()
     });
     if (error) {
       setError('更新失敗: ' + error.message);
@@ -373,45 +380,54 @@ function App() {
 
   // 開始編輯
   const handleEdit = async (pc) => {
+    setLoadingDetail(true);
+    const { data: fullPc, error: fetchError } = await getPCInfoById(pc.id);
+    setLoadingDetail(false);
+
+    if (fetchError) {
+      setError('無法讀取詳細資料: ' + fetchError.message);
+      return;
+    }
+
     setFormData({
-      computer_name: pc.computer_name || '',
-      cpu_name: pc.cpu_name || '',
-      description: pc.description || '',
-      notes: pc.notes || '',
-      custodian: pc.custodian || '',
-      asset_id: pc.asset_id || '',
-      cores: pc.cores != null ? String(pc.cores) : '',
-      logical_processors: pc.logical_processors != null ? String(pc.logical_processors) : '',
-      os_name: pc.os_name || '',
-      os_version: pc.os_version || '',
-      os_architecture: pc.os_architecture || '',
-      os_install_date: pc.os_install_date ? pc.os_install_date.split('T')[0] : '',
-      hostname: pc.hostname || '',
-      ip_address: pc.ip_address || '',
-      ram_gb: pc.ram_gb != null ? String(pc.ram_gb) : '',
-      hdd_info: pc.hdd_info || '',
-      vga_name: pc.vga_name || '',
-      vga_ram_mb: pc.vga_ram_mb != null ? String(pc.vga_ram_mb) : '',
-      uuid: pc.uuid || '',
+      computer_name: fullPc.computer_name || '',
+      cpu_name: fullPc.cpu_name || '',
+      description: fullPc.description || '',
+      notes: fullPc.notes || '',
+      custodian: fullPc.custodian || '',
+      asset_id: fullPc.asset_id || '',
+      cores: fullPc.cores != null ? String(fullPc.cores) : '',
+      logical_processors: fullPc.logical_processors != null ? String(fullPc.logical_processors) : '',
+      os_name: fullPc.os_name || '',
+      os_version: fullPc.os_version || '',
+      os_architecture: fullPc.os_architecture || '',
+      os_install_date: fullPc.os_install_date ? fullPc.os_install_date.split('T')[0] : '',
+      hostname: fullPc.hostname || '',
+      ip_address: fullPc.ip_address || '',
+      ram_gb: fullPc.ram_gb != null ? String(fullPc.ram_gb) : '',
+      hdd_info: fullPc.hdd_info || '',
+      vga_name: fullPc.vga_name || '',
+      vga_ram_mb: fullPc.vga_ram_mb != null ? String(fullPc.vga_ram_mb) : '',
+      uuid: fullPc.uuid || '',
       // BIOS
-      bios_vendor: pc.bios_vendor || '',
-      bios_version: pc.bios_version || '',
-      bios_release_date: pc.bios_release_date ? (pc.bios_release_date.split ? pc.bios_release_date.split('T')[0] : pc.bios_release_date) : '',
-      bios_manufacture_date: pc.bios_manufacture_date ? (pc.bios_manufacture_date.split ? pc.bios_manufacture_date.split('T')[0] : pc.bios_manufacture_date) : '',
-      notes_ii: pc.notes_ii || ''
+      bios_vendor: fullPc.bios_vendor || '',
+      bios_version: fullPc.bios_version || '',
+      bios_release_date: fullPc.bios_release_date ? (fullPc.bios_release_date.split ? fullPc.bios_release_date.split('T')[0] : fullPc.bios_release_date) : '',
+      bios_manufacture_date: fullPc.bios_manufacture_date ? (fullPc.bios_manufacture_date.split ? fullPc.bios_manufacture_date.split('T')[0] : fullPc.bios_manufacture_date) : '',
+      notes_ii: fullPc.notes_ii || ''
     });
     // 如果資料中 cores/logical_processors 是多筆（逗號分隔或陣列），把它們拆成 list 供多行編輯
-    if (pc.cores != null) {
-      if (Array.isArray(pc.cores)) setCoresList(pc.cores.map(x => String(x)));
-      else if (typeof pc.cores === 'string' && pc.cores.includes(',')) setCoresList(pc.cores.split(',').map(s => s.trim()));
+    if (fullPc.cores != null) {
+      if (Array.isArray(fullPc.cores)) setCoresList(fullPc.cores.map(x => String(x)));
+      else if (typeof fullPc.cores === 'string' && fullPc.cores.includes(',')) setCoresList(fullPc.cores.split(',').map(s => s.trim()));
       else setCoresList([]);
     } else {
       setCoresList([]);
     }
 
-    if (pc.logical_processors != null) {
-      if (Array.isArray(pc.logical_processors)) setLogicalList(pc.logical_processors.map(x => String(x)));
-      else if (typeof pc.logical_processors === 'string' && pc.logical_processors.includes(',')) setLogicalList(pc.logical_processors.split(',').map(s => s.trim()));
+    if (fullPc.logical_processors != null) {
+      if (Array.isArray(fullPc.logical_processors)) setLogicalList(fullPc.logical_processors.map(x => String(x)));
+      else if (typeof fullPc.logical_processors === 'string' && fullPc.logical_processors.includes(',')) setLogicalList(fullPc.logical_processors.split(',').map(s => s.trim()));
       else setLogicalList([]);
     } else {
       setLogicalList([]);
@@ -420,7 +436,7 @@ function App() {
     // 載入已安裝的軟體
     setLoadingSoftware(true);
     setShowSoftwareSection(false); // 預設收折
-    const { data, error } = await getInstalledSoftwareByPCId(pc.id);
+    const { data, error } = await getInstalledSoftwareByPCId(fullPc.id);
     if (error) {
       console.error('Error loading installed software:', error);
       setInstalledSoftware([]);
@@ -429,7 +445,7 @@ function App() {
     }
     setLoadingSoftware(false);
 
-    setEditingId(pc.id);
+    setEditingId(fullPc.id);
     setShowForm(true);
   };
 
@@ -672,17 +688,17 @@ function App() {
     return isToday(pc.created_at) || isToday(pc.updated_at);
   };
 
-  // 檢視 modal 狀態與處理
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [viewPc, setViewPc] = useState(null);
+  const handleView = async (pc) => {
+    setLoadingDetail(true);
+    const { data, error } = await getPCInfoById(pc.id);
+    setLoadingDetail(false);
 
-  // 刪除確認 modal 狀態
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'single', id } or { type: 'bulk', ids }
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    if (error) {
+      setError('無法讀取詳細資料: ' + error.message);
+      return;
+    }
 
-  const handleView = (pc) => {
-    setViewPc(pc);
+    setViewPc(data);
     setShowViewModal(true);
   };
 
@@ -900,6 +916,18 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {loadingDetail && (
+              <div className="modal-overlay" style={{ zIndex: 3000 }}>
+                <div className="modal" style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '8px', maxWidth: '300px' }}>
+                  <div className="spinner" style={{ border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 2s linear infinite', margin: '0 auto 10px' }}></div>
+                  <p>正在載入詳細資料...</p>
+                  <style>{`
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                  `}</style>
+                </div>
+              </div>
+            )}
 
             {showForm && (
               <div className="form-container">
@@ -1370,6 +1398,7 @@ function App() {
                         />
                       </div>
                     )}
+                    <div className="modal-row"><strong>異動日期:</strong> <span>{viewPc.updated_at ? new Date(viewPc.updated_at).toLocaleString('zh-TW', { hour12: false }) : '-'}</span></div>
                   </div>
                 </div>
               </div>
@@ -1470,6 +1499,7 @@ function App() {
                         <th onClick={() => requestSort('ip_address')} style={{ cursor: 'pointer' }}>
                           IP 地址 {getSortIndicator('ip_address')}
                         </th>
+
                         {showHiddenItems && (
                           <>
                             <th onClick={() => requestSort('is_hidden')} style={{ cursor: 'pointer' }}>隱藏{getSortIndicator('is_hidden')}</th>
@@ -1555,6 +1585,7 @@ function App() {
                                 )}
                               </div>
                             </td>
+
                             {showHiddenItems && (
                               <>
                                 <td data-label="隱藏">
