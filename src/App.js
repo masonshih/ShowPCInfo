@@ -688,6 +688,22 @@ function App() {
     return new Date(dateString).toLocaleDateString('zh-TW');
   };
 
+  // 檢查日期是否為今日
+  const isToday = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const today = new Date();
+    return date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate();
+  };
+
+  // 檢查記錄是否為今日新增或異動
+  const isModifiedOrCreatedToday = (pc) => {
+    // 檢查 created_at 或 updated_at 是否為今日
+    return isToday(pc.created_at) || isToday(pc.updated_at);
+  };
+
   // 檢視 modal 狀態與處理
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewPc, setViewPc] = useState(null);
@@ -1496,146 +1512,153 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {currentPCList.map((pc) => (
-                        <tr key={pc.id} className={pc.notes && pc.notes.trim() !== '' ? 'row-with-notes' : ''}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.includes(pc.id)}
-                              onChange={(e) => { e.stopPropagation(); toggleSelect(pc.id); }}
-                              title="選取此筆"
-                            />
-                          </td>
-                          <td data-label="電腦名稱">
-                            <div className="cell-content">
-                              <strong>{pc.computer_name}</strong>
-                              {pc.description && <span className="cell-subtext">{pc.description}</span>}
-                            </div>
-                          </td>
+                      {currentPCList.map((pc) => {
+                        // 組合 className：檢查是否有備註 或 今日新增/異動
+                        const classNames = [];
+                        if (pc.notes && pc.notes.trim() !== '') classNames.push('row-with-notes');
+                        if (isModifiedOrCreatedToday(pc)) classNames.push('row-today-modified');
 
-                          <td data-label="CPU">
-                            <div className="cell-content">
-                              <span>{pc.cpu_name}</span>
-                              {pc.cores && <span className="cell-subtext">{pc.cores} 核心 / {pc.logical_processors} 執行緒</span>}
-                            </div>
-                          </td>
-                          <td data-label="記憶體">
-                            {pc.ram_gb ? `${pc.ram_gb} GB` : '-'}
-                          </td>
-                          <td data-label="硬碟資訊">
-                            {pc.hdd_info || '-'}
-                          </td>
-                          <td data-label="作業系統">
-                            <div className="cell-content">
-                              <span>{pc.os_name}</span>
-                              {pc.os_version && <span className="cell-subtext">{pc.os_version}</span>}
-                            </div>
-                          </td>
-                          <td data-label="IP 地址">
-                            <div className="cell-content" style={{ flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-                              <span>{pc.ip_address || '-'}</span>
-                              {pc.ip_address && (
-                                <div style={{ position: 'relative', display: 'inline-block' }}>
-                                  <button
-                                    className="btn-icon"
-                                    onClick={(e) => { e.stopPropagation(); handleCopyIP(pc.ip_address, pc.id); }}
-                                    title="複製 IP"
-                                    style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                                  >
-                                    📋
-                                  </button>
-                                  {copySuccess && copySuccess.id === pc.id && (
-                                    <span style={{
-                                      position: 'absolute',
-                                      top: '-25px',
-                                      left: '50%',
-                                      transform: 'translateX(-50%)',
-                                      background: '#333',
-                                      color: 'white',
-                                      padding: '2px 6px',
-                                      borderRadius: '4px',
-                                      fontSize: '12px',
-                                      whiteSpace: 'nowrap',
-                                      zIndex: 10
-                                    }}>
-                                      {copySuccess.text}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          {showHiddenItems && (
-                            <>
-                              <td data-label="隱藏">
-                                <span style={{
-                                  padding: '2px 6px',
-                                  borderRadius: '4px',
-                                  backgroundColor: pc.is_hidden ? '#fee2e2' : '#dcfce7',
-                                  color: pc.is_hidden ? '#991b1b' : '#166534',
-                                  fontSize: '0.85em'
-                                }}>
-                                  {pc.is_hidden ? '是' : '否'}
-                                </span>
-                              </td>
-                              <td data-label="隱藏日期">{pc.hidden_at ? new Date(pc.hidden_at).toLocaleString('zh-TW') : '-'}</td>
-                            </>
-                          )}
-                          <td data-label="動作">
-                            <div className="action-buttons">
-                              <button
-                                className="btn-icon btn-view"
-                                onClick={() => handleView(pc)}
-                                title="檢視"
-                              >
-                                🔍
-                              </button>
-                              <button
-                                className="btn-icon btn-edit"
-                                onClick={() => handleEdit(pc)}
-                                title="編輯"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                className="btn-icon btn-clone"
-                                onClick={() => handleClone(pc)}
-                                title="複製新增"
-                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                              >
-                                📄
-                              </button>
-                              {pc.is_hidden ? (
-                                <>
-                                  <button
-                                    className="btn-icon btn-restore"
-                                    onClick={() => handleRestore(pc)}
-                                    title="還原"
-                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                                  >
-                                    ♻️
-                                  </button>
+                        return (
+                          <tr key={pc.id} className={classNames.join(' ')}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(pc.id)}
+                                onChange={(e) => { e.stopPropagation(); toggleSelect(pc.id); }}
+                                title="選取此筆"
+                              />
+                            </td>
+                            <td data-label="電腦名稱">
+                              <div className="cell-content">
+                                <strong>{pc.computer_name}</strong>
+                                {pc.description && <span className="cell-subtext">{pc.description}</span>}
+                              </div>
+                            </td>
+
+                            <td data-label="CPU">
+                              <div className="cell-content">
+                                <span>{pc.cpu_name}</span>
+                                {pc.cores && <span className="cell-subtext">{pc.cores} 核心 / {pc.logical_processors} 執行緒</span>}
+                              </div>
+                            </td>
+                            <td data-label="記憶體">
+                              {pc.ram_gb ? `${pc.ram_gb} GB` : '-'}
+                            </td>
+                            <td data-label="硬碟資訊">
+                              {pc.hdd_info || '-'}
+                            </td>
+                            <td data-label="作業系統">
+                              <div className="cell-content">
+                                <span>{pc.os_name}</span>
+                                {pc.os_version && <span className="cell-subtext">{pc.os_version}</span>}
+                              </div>
+                            </td>
+                            <td data-label="IP 地址">
+                              <div className="cell-content" style={{ flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+                                <span>{pc.ip_address || '-'}</span>
+                                {pc.ip_address && (
+                                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <button
+                                      className="btn-icon"
+                                      onClick={(e) => { e.stopPropagation(); handleCopyIP(pc.ip_address, pc.id); }}
+                                      title="複製 IP"
+                                      style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                    >
+                                      📋
+                                    </button>
+                                    {copySuccess && copySuccess.id === pc.id && (
+                                      <span style={{
+                                        position: 'absolute',
+                                        top: '-25px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        background: '#333',
+                                        color: 'white',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        whiteSpace: 'nowrap',
+                                        zIndex: 10
+                                      }}>
+                                        {copySuccess.text}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            {showHiddenItems && (
+                              <>
+                                <td data-label="隱藏">
+                                  <span style={{
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: pc.is_hidden ? '#fee2e2' : '#dcfce7',
+                                    color: pc.is_hidden ? '#991b1b' : '#166534',
+                                    fontSize: '0.85em'
+                                  }}>
+                                    {pc.is_hidden ? '是' : '否'}
+                                  </span>
+                                </td>
+                                <td data-label="隱藏日期">{pc.hidden_at ? new Date(pc.hidden_at).toLocaleString('zh-TW') : '-'}</td>
+                              </>
+                            )}
+                            <td data-label="動作">
+                              <div className="action-buttons">
+                                <button
+                                  className="btn-icon btn-view"
+                                  onClick={() => handleView(pc)}
+                                  title="檢視"
+                                >
+                                  🔍
+                                </button>
+                                <button
+                                  className="btn-icon btn-edit"
+                                  onClick={() => handleEdit(pc)}
+                                  title="編輯"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  className="btn-icon btn-clone"
+                                  onClick={() => handleClone(pc)}
+                                  title="複製新增"
+                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                >
+                                  📄
+                                </button>
+                                {pc.is_hidden ? (
+                                  <>
+                                    <button
+                                      className="btn-icon btn-restore"
+                                      onClick={() => handleRestore(pc)}
+                                      title="還原"
+                                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                    >
+                                      ♻️
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-delete"
+                                      onClick={() => handlePermanentDelete(pc)}
+                                      title="永久刪除"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </>
+                                ) : (
                                   <button
                                     className="btn-icon btn-delete"
-                                    onClick={() => handlePermanentDelete(pc)}
-                                    title="永久刪除"
+                                    onClick={() => handleDelete(pc)}
+                                    title="隱藏"
                                   >
                                     🗑️
                                   </button>
-                                </>
-                              ) : (
-                                <button
-                                  className="btn-icon btn-delete"
-                                  onClick={() => handleDelete(pc)}
-                                  title="隱藏"
-                                >
-                                  🗑️
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
 

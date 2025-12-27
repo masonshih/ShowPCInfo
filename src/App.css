@@ -866,6 +866,18 @@ body {
   background: #fef3c7;
 }
 
+/* 今日新增或異動的記錄 - 紅色外框 */
+.pc-table tbody tr.row-today-modified {
+  border: 3px solid #ef4444 !important;
+  background: #fef2f2;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.pc-table tbody tr.row-today-modified:hover {
+  background: #fee2e2;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
 .pc-table tbody tr.selected-row {
   background: #e6f3ff;
 }
