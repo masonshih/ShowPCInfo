@@ -331,6 +331,21 @@ function PrinterManagement({ onCountChange }) {
         return new Date(dateString).toLocaleDateString('zh-TW');
     };
 
+    // 檢查日期是否為今日
+    const isToday = (dateString) => {
+        if (!dateString) return false;
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate();
+    };
+
+    // 檢查記錄是否為今日新增或異動
+    const isModifiedOrCreatedToday = (item) => {
+        return isToday(item.created_at) || isToday(item.updated_at);
+    };
+
     const handlePaste = (e) => {
         e.preventDefault();
         const clipboardData = e.clipboardData || window.clipboardData;
@@ -868,131 +883,138 @@ function PrinterManagement({ onCountChange }) {
                                 <td colSpan={showHiddenItems ? "9" : "7"} className="no-data">目前沒有印表機資料</td>
                             </tr>
                         ) : (
-                            currentPrinters.map(printer => (
-                                <tr key={printer.id} className={selectedIds.includes(printer.id) ? 'selected-row' : ''}>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.includes(printer.id)}
-                                            onChange={() => handleCheckboxChange(printer.id)}
-                                        />
-                                    </td>
-                                    <td>{printer.brand}</td>
-                                    <td>{printer.model}</td>
-                                    <td>{printer.asset_id || '-'}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <span>{printer.ip_address || '-'}</span>
-                                            {printer.ip_address && (
-                                                <div style={{ position: 'relative', display: 'inline-block' }}>
-                                                    <button
-                                                        className="btn-icon"
-                                                        onClick={(e) => { e.stopPropagation(); handleCopyIP(printer.ip_address, printer.id); }}
-                                                        title="複製 IP"
-                                                        style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        📋
-                                                    </button>
-                                                    <button
-                                                        className="btn-icon"
-                                                        onClick={(e) => { e.stopPropagation(); window.open(`http://${printer.ip_address}`, '_blank'); }}
-                                                        title="開啟網頁"
-                                                        style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        🌐
-                                                    </button>
-                                                    {copySuccess && copySuccess.id === printer.id && (
-                                                        <span style={{
-                                                            position: 'absolute',
-                                                            top: '-25px',
-                                                            left: '50%',
-                                                            transform: 'translateX(-50%)',
-                                                            background: '#333',
-                                                            color: 'white',
-                                                            padding: '2px 6px',
-                                                            borderRadius: '4px',
-                                                            fontSize: '12px',
-                                                            whiteSpace: 'nowrap',
-                                                            zIndex: 10
-                                                        }}>
-                                                            {copySuccess.text}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td>{formatDate(printer.toner_replaced_at)}</td>
-                                    {showHiddenItems && (
-                                        <>
-                                            <td>
-                                                <span style={{
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    backgroundColor: printer.is_hidden ? '#fee2e2' : '#dcfce7',
-                                                    color: printer.is_hidden ? '#991b1b' : '#166534',
-                                                    fontSize: '0.85em'
-                                                }}>
-                                                    {printer.is_hidden ? '是' : '否'}
-                                                </span>
-                                            </td>
-                                            <td>{printer.hidden_at ? new Date(printer.hidden_at).toLocaleString('zh-TW') : '-'}</td>
-                                        </>
-                                    )}
-                                    <td>{printer.notes || '-'}</td>
-                                    <td className="actions-cell">
-                                        <button
-                                            className="btn-icon view"
-                                            onClick={() => handleView(printer)}
-                                            title="檢視"
-                                        >
-                                            🔍
-                                        </button>
-                                        <button
-                                            className="btn-icon edit"
-                                            onClick={() => handleEdit(printer)}
-                                            title="編輯"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn-icon clone"
-                                            onClick={() => handleClone(printer)}
-                                            title="複製新增"
-                                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                                        >
-                                            📄
-                                        </button>
-                                        {printer.is_hidden ? (
+                            currentPrinters.map(printer => {
+                                const classNames = [];
+                                if (selectedIds.includes(printer.id)) classNames.push('selected-row');
+                                if (isModifiedOrCreatedToday(printer)) classNames.push('row-today-modified');
+                                if (printer.notes && printer.notes.trim() !== '') classNames.push('row-with-notes');
+
+                                return (
+                                    <tr key={printer.id} className={classNames.join(' ')}>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(printer.id)}
+                                                onChange={() => handleCheckboxChange(printer.id)}
+                                            />
+                                        </td>
+                                        <td>{printer.brand}</td>
+                                        <td>{printer.model}</td>
+                                        <td>{printer.asset_id || '-'}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <span>{printer.ip_address || '-'}</span>
+                                                {printer.ip_address && (
+                                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                        <button
+                                                            className="btn-icon"
+                                                            onClick={(e) => { e.stopPropagation(); handleCopyIP(printer.ip_address, printer.id); }}
+                                                            title="複製 IP"
+                                                            style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            📋
+                                                        </button>
+                                                        <button
+                                                            className="btn-icon"
+                                                            onClick={(e) => { e.stopPropagation(); window.open(`http://${printer.ip_address}`, '_blank'); }}
+                                                            title="開啟網頁"
+                                                            style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            🌐
+                                                        </button>
+                                                        {copySuccess && copySuccess.id === printer.id && (
+                                                            <span style={{
+                                                                position: 'absolute',
+                                                                top: '-25px',
+                                                                left: '50%',
+                                                                transform: 'translateX(-50%)',
+                                                                background: '#333',
+                                                                color: 'white',
+                                                                padding: '2px 6px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px',
+                                                                whiteSpace: 'nowrap',
+                                                                zIndex: 10
+                                                            }}>
+                                                                {copySuccess.text}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>{formatDate(printer.toner_replaced_at)}</td>
+                                        {showHiddenItems && (
                                             <>
-                                                <button
-                                                    className="btn-icon restore"
-                                                    onClick={() => handleRestore(printer)}
-                                                    title="還原"
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                                                >
-                                                    ♻️
-                                                </button>
+                                                <td>
+                                                    <span style={{
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backgroundColor: printer.is_hidden ? '#fee2e2' : '#dcfce7',
+                                                        color: printer.is_hidden ? '#991b1b' : '#166534',
+                                                        fontSize: '0.85em'
+                                                    }}>
+                                                        {printer.is_hidden ? '是' : '否'}
+                                                    </span>
+                                                </td>
+                                                <td>{printer.hidden_at ? new Date(printer.hidden_at).toLocaleString('zh-TW') : '-'}</td>
+                                            </>
+                                        )}
+                                        <td>{printer.notes || '-'}</td>
+                                        <td className="actions-cell">
+                                            <button
+                                                className="btn-icon view"
+                                                onClick={() => handleView(printer)}
+                                                title="檢視"
+                                            >
+                                                🔍
+                                            </button>
+                                            <button
+                                                className="btn-icon edit"
+                                                onClick={() => handleEdit(printer)}
+                                                title="編輯"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn-icon clone"
+                                                onClick={() => handleClone(printer)}
+                                                title="複製新增"
+                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                            >
+                                                📄
+                                            </button>
+                                            {printer.is_hidden ? (
+                                                <>
+                                                    <button
+                                                        className="btn-icon restore"
+                                                        onClick={() => handleRestore(printer)}
+                                                        title="還原"
+                                                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                                    >
+                                                        ♻️
+                                                    </button>
+                                                    <button
+                                                        className="btn-icon delete"
+                                                        onClick={() => handlePermanentDelete(printer)}
+                                                        title="永久刪除"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </>
+                                            ) : (
                                                 <button
                                                     className="btn-icon delete"
-                                                    onClick={() => handlePermanentDelete(printer)}
-                                                    title="永久刪除"
+                                                    onClick={() => handleDelete(printer)}
+                                                    title="隱藏"
                                                 >
                                                     🗑️
                                                 </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                className="btn-icon delete"
-                                                onClick={() => handleDelete(printer)}
-                                                title="隱藏"
-                                            >
-                                                🗑️
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>

@@ -332,6 +332,21 @@ function NetworkManagement({ onCountChange }) {
         return new Date(dateString).toLocaleDateString('zh-TW');
     };
 
+    // 檢查日期是否為今日
+    const isToday = (dateString) => {
+        if (!dateString) return false;
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate();
+    };
+
+    // 檢查記錄是否為今日新增或異動
+    const isModifiedOrCreatedToday = (item) => {
+        return isToday(item.created_at) || isToday(item.updated_at);
+    };
+
     const handlePaste = (e) => {
         e.preventDefault();
         const clipboardData = e.clipboardData || window.clipboardData;
@@ -863,131 +878,138 @@ function NetworkManagement({ onCountChange }) {
                                 <td colSpan={showHiddenItems ? "9" : "7"} className="no-data">目前沒有網路設備資料</td>
                             </tr>
                         ) : (
-                            currentEquipment.map(item => (
-                                <tr key={item.id} className={selectedIds.includes(item.id) ? 'selected-row' : ''}>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.includes(item.id)}
-                                            onChange={() => handleCheckboxChange(item.id)}
-                                        />
-                                    </td>
-                                    <td>{item.brand}</td>
-                                    <td>{item.model}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <span>{item.ip_address || '-'}</span>
-                                            {item.ip_address && (
-                                                <div style={{ position: 'relative', display: 'inline-block' }}>
-                                                    <button
-                                                        className="btn-icon"
-                                                        onClick={(e) => { e.stopPropagation(); handleCopyIP(item.ip_address, item.id); }}
-                                                        title="複製 IP"
-                                                        style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        📋
-                                                    </button>
-                                                    <button
-                                                        className="btn-icon"
-                                                        onClick={(e) => { e.stopPropagation(); window.open(`http://${item.ip_address}`, '_blank'); }}
-                                                        title="開啟網頁"
-                                                        style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                                                    >
-                                                        🌐
-                                                    </button>
-                                                    {copySuccess && copySuccess.id === item.id && (
-                                                        <span style={{
-                                                            position: 'absolute',
-                                                            top: '-25px',
-                                                            left: '50%',
-                                                            transform: 'translateX(-50%)',
-                                                            background: '#333',
-                                                            color: 'white',
-                                                            padding: '2px 6px',
-                                                            borderRadius: '4px',
-                                                            fontSize: '12px',
-                                                            whiteSpace: 'nowrap',
-                                                            zIndex: 10
-                                                        }}>
-                                                            {copySuccess.text}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td>{item.location || '-'}</td>
+                            currentEquipment.map(item => {
+                                const classNames = [];
+                                if (selectedIds.includes(item.id)) classNames.push('selected-row');
+                                if (isModifiedOrCreatedToday(item)) classNames.push('row-today-modified');
+                                if (item.notes && item.notes.trim() !== '') classNames.push('row-with-notes');
 
-                                    <td>{item.notes || '-'}</td>
-                                    {showHiddenItems && (
-                                        <>
-                                            <td>
-                                                <span style={{
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    backgroundColor: item.is_hidden ? '#fee2e2' : '#dcfce7',
-                                                    color: item.is_hidden ? '#991b1b' : '#166534',
-                                                    fontSize: '0.85em'
-                                                }}>
-                                                    {item.is_hidden ? '是' : '否'}
-                                                </span>
-                                            </td>
-                                            <td>{item.hidden_at ? new Date(item.hidden_at).toLocaleString('zh-TW') : '-'}</td>
-                                        </>
-                                    )}
-                                    <td className="actions-cell">
-                                        <button
-                                            className="btn-icon view"
-                                            onClick={() => handleView(item)}
-                                            title="檢視"
-                                        >
-                                            🔍
-                                        </button>
-                                        <button
-                                            className="btn-icon edit"
-                                            onClick={() => handleEdit(item)}
-                                            title="編輯"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn-icon clone"
-                                            onClick={() => handleClone(item)}
-                                            title="複製 (Clone)"
-                                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                                        >
-                                            📄
-                                        </button>
-                                        {item.is_hidden ? (
+                                return (
+                                    <tr key={item.id} className={classNames.join(' ')}>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(item.id)}
+                                                onChange={() => handleCheckboxChange(item.id)}
+                                            />
+                                        </td>
+                                        <td>{item.brand}</td>
+                                        <td>{item.model}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <span>{item.ip_address || '-'}</span>
+                                                {item.ip_address && (
+                                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                        <button
+                                                            className="btn-icon"
+                                                            onClick={(e) => { e.stopPropagation(); handleCopyIP(item.ip_address, item.id); }}
+                                                            title="複製 IP"
+                                                            style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            📋
+                                                        </button>
+                                                        <button
+                                                            className="btn-icon"
+                                                            onClick={(e) => { e.stopPropagation(); window.open(`http://${item.ip_address}`, '_blank'); }}
+                                                            title="開啟網頁"
+                                                            style={{ padding: '2px 5px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            🌐
+                                                        </button>
+                                                        {copySuccess && copySuccess.id === item.id && (
+                                                            <span style={{
+                                                                position: 'absolute',
+                                                                top: '-25px',
+                                                                left: '50%',
+                                                                transform: 'translateX(-50%)',
+                                                                background: '#333',
+                                                                color: 'white',
+                                                                padding: '2px 6px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px',
+                                                                whiteSpace: 'nowrap',
+                                                                zIndex: 10
+                                                            }}>
+                                                                {copySuccess.text}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>{item.location || '-'}</td>
+
+                                        <td>{item.notes || '-'}</td>
+                                        {showHiddenItems && (
                                             <>
-                                                <button
-                                                    className="btn-icon restore"
-                                                    onClick={() => handleRestore(item)}
-                                                    title="還原"
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                                                >
-                                                    ♻️
-                                                </button>
+                                                <td>
+                                                    <span style={{
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backgroundColor: item.is_hidden ? '#fee2e2' : '#dcfce7',
+                                                        color: item.is_hidden ? '#991b1b' : '#166534',
+                                                        fontSize: '0.85em'
+                                                    }}>
+                                                        {item.is_hidden ? '是' : '否'}
+                                                    </span>
+                                                </td>
+                                                <td>{item.hidden_at ? new Date(item.hidden_at).toLocaleString('zh-TW') : '-'}</td>
+                                            </>
+                                        )}
+                                        <td className="actions-cell">
+                                            <button
+                                                className="btn-icon view"
+                                                onClick={() => handleView(item)}
+                                                title="檢視"
+                                            >
+                                                🔍
+                                            </button>
+                                            <button
+                                                className="btn-icon edit"
+                                                onClick={() => handleEdit(item)}
+                                                title="編輯"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn-icon clone"
+                                                onClick={() => handleClone(item)}
+                                                title="複製 (Clone)"
+                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                            >
+                                                📄
+                                            </button>
+                                            {item.is_hidden ? (
+                                                <>
+                                                    <button
+                                                        className="btn-icon restore"
+                                                        onClick={() => handleRestore(item)}
+                                                        title="還原"
+                                                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
+                                                    >
+                                                        ♻️
+                                                    </button>
+                                                    <button
+                                                        className="btn-icon delete"
+                                                        onClick={() => handlePermanentDelete(item)}
+                                                        title="永久刪除"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </>
+                                            ) : (
                                                 <button
                                                     className="btn-icon delete"
-                                                    onClick={() => handlePermanentDelete(item)}
-                                                    title="永久刪除"
+                                                    onClick={() => handleDelete(item)}
+                                                    title="隱藏"
                                                 >
                                                     🗑️
                                                 </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                className="btn-icon delete"
-                                                onClick={() => handleDelete(item)}
-                                                title="隱藏"
-                                            >
-                                                🗑️
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
